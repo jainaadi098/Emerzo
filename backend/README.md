@@ -8,20 +8,20 @@ This project uses a Python **virtual environment** to manage dependencies.
 
 ### Setup
 
-Create and activate `venv` in the project root:
+Create and activate `.venv` in the `Emerzo/backend/` path:
 
-* **Linux / macOS** (in **Emerzo/backend** path)
-
-```
-python3 -m venv venv
-source venv/bin/activate
-```
-
-* **Windows (PowerShell)** (in **Emerzo/backend** path)
+* **Linux / macOS** 
 
 ```
-python -m venv venv
-venv\\Scripts\\Activate.ps1
+python3 -m venv .venv
+source .venv/bin/activate
+```
+
+* **Windows (PowerShell)**
+
+```
+python -m venv .venv
+.venv\\Scripts\\Activate.ps1
 ```
 
 Install dependencies:
@@ -37,7 +37,7 @@ pip install -r requirements.txt
 Activate before running the project:
 
 ```
-source venv/bin/activate   # or venv\\Scripts\\Activate.ps1
+source .venv/bin/activate   # or .venv\\Scripts\\Activate.ps1
 ```
 
 Deactivate when done:
@@ -60,16 +60,16 @@ pip freeze > requirements.txt
 
 ### Notes
 
-* `venv/` is **not committed** to git
+* `.venv/` is **not committed** to git
 * `requirements.txt` **is committed**
-* If `venv` breaks, delete it and repeat setup
+* If `.venv` breaks, delete it and repeat setup
 
 ---
 
 ### TL;DR
 
 ```
-python -m venv venv
+python -m venv ,venv
 source venv/bin/activate
 pip install -r requirements.txt
 ```
