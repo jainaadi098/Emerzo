@@ -1,121 +1,157 @@
-import sys
-import os
+from sqlalchemy.orm import Session
+from app.db.database import SessionLocal, engine
+from app import models
 
-# Ensure we can find the 'app' folder
-sys.path.append(os.getcwd())
-
-from app.db.database import SessionLocal
-from app.models import Hospital, User
-
-# Connect to Database
-db = SessionLocal()
+# 1. Sabse pehle Tables Create karein
+models.Base.metadata.create_all(bind=engine)
 
 def seed_data():
-    print("🌱 Starting Database Seeding (Bhopal Data)...")
+    db = SessionLocal()
+    print(" Starting Database Seeding (Bhopal Data)...")
 
-    # 1. Clear Old Data
+    # ---------------------------------------------------
+    # 2. CLEAR OLD DATA (Safayi Abhiyan)
+    # ---------------------------------------------------
     try:
-        db.query(Hospital).delete()
-        db.query(User).delete()
-        print("🧹 Old data cleared.")
-    except Exception:
-        print("⚠️  Database empty, skipping cleanup.")
+        # Child Tables pehle delete hongi
+        db.query(models.HospitalNotification).delete()
+        db.query(models.EmergencyRequest).delete()
+        
+        # Parent Tables baad mein
+        db.query(models.User).delete()
+        db.query(models.Hospital).delete()
+        
+        db.commit()
+        print(" Old data cleared successfully.")
+    except Exception as e:
+        print(f" Cleanup skipped or failed (New DB?): {e}")
+        db.rollback()
 
-    # 2. Add Dummy Users
+    # ---------------------------------------------------
+    # 3. ADD USERS (Same as before)
+    # ---------------------------------------------------
     users = [
-        User(name="Rahul Sharma", phone="+919999999991", gender="Male"),
-        User(name="Priya Singh", phone="+919999999992", gender="Female")
+        models.User(
+            full_name="Rahul Sharma", 
+            email="rahul@example.com", 
+            password="hashedpassword123"
+        ),
+        models.User(
+            full_name="Priya Verma", 
+            email="priya@example.com", 
+            password="hashedpassword123"
+        ),
+        models.User(
+            full_name="Amit Singh", 
+            email="amit@example.com", 
+            password="hashedpassword123"
+        )
     ]
     db.add_all(users)
+    db.commit()
+    print(" Users Added")
 
-    # 3. Add 11 Bhopal Hospitals
+    # 11 Hospitals are added
+    
     hospitals = [
-        # --- General / Emergency Hospitals (TRUE) ---
-        Hospital(
+        # --- General / Emergency Hospitals ---
+        models.Hospital(
             name="AIIMS Bhopal",
             latitude=23.2086,
             longitude=77.4607,
-            supports_emergency=True,
-            contact_number="0755-2970771"
+            address="Saket Nagar, Bhopal",
+            contact_number="0755-2970771",
+            supports_emergency=True
         ),
-        Hospital(
+        models.Hospital(
             name="Bhopal Memorial Hospital (BMHRC)",
             latitude=23.2941,
             longitude=77.4242,
-            supports_emergency=True,
-            contact_number="0755-2740875"
+            address="Raisen Bypass Road, Bhopal",
+            contact_number="0755-2740875",
+            supports_emergency=True
         ),
-        Hospital(
+        models.Hospital(
             name="Hamidia Hospital",
             latitude=23.2570,
             longitude=77.3929,
-            supports_emergency=True,
-            contact_number="0755-2660233"
+            address="Royal Market, Bhopal",
+            contact_number="0755-2660233",
+            supports_emergency=True
         ),
-        Hospital(
+        models.Hospital(
             name="Bansal Hospital",
             latitude=23.2114,
             longitude=77.4332,
-            supports_emergency=True,
-            contact_number="0755-4086000"
+            address="Shahpura, Bhopal",
+            contact_number="0755-4086000",
+            supports_emergency=True
         ),
-        Hospital(
+        models.Hospital(
             name="Chirayu Medical College & Hospital",
             latitude=23.2831,
             longitude=77.3364,
-            supports_emergency=True,
-            contact_number="0755-2709101"
+            address="Bhopal-Indore Highway",
+            contact_number="0755-2709101",
+            supports_emergency=True
         ),
-        Hospital(
+        models.Hospital(
             name="Jai Prakash (JP) District Hospital",
             latitude=23.2356,
             longitude=77.4005,
-            supports_emergency=True,
-            contact_number="0755-2551151"
+            address="Tulsi Nagar, Bhopal",
+            contact_number="0755-2551151",
+            supports_emergency=True
         ),
-        Hospital(
+        models.Hospital(
             name="Narmada Trauma Centre",
             latitude=23.2201,
             longitude=77.4367,
-            supports_emergency=True,
-            contact_number="0755-4040000"
+            address="Hoshangabad Road, Bhopal",
+            contact_number="0755-4040000",
+            supports_emergency=True
         ),
-        Hospital(
+        models.Hospital(
             name="J.K. Hospital (LN Medical College)",
             latitude=23.1765,
             longitude=77.4124,
-            supports_emergency=True,
-            contact_number="0755-4087000"
+            address="Kolar Road, Bhopal",
+            contact_number="0755-4087000",
+            supports_emergency=True
         ),
-
-        # --- No Emergency Support / Specialized (FALSE) ---
-        Hospital(
+        
+        # --- No Emergency Support / Specialized ---
+        models.Hospital(
             name="ASG Eye Hospital",
             latitude=23.2335,
             longitude=77.4295,
-            supports_emergency=False,  # This will be ignored by AI
-            contact_number="0755-4082000"
+            address="M.P. Nagar, Bhopal",
+            contact_number="0755-4082000",
+            supports_emergency=False # No Emergency
         ),
-        Hospital(
+        models.Hospital(
             name="Rishiraj College of Dental Sciences",
             latitude=23.3050,
             longitude=77.3370,
-            supports_emergency=False,  # This will be ignored by AI
-            contact_number="0755-6647306"
+            address="Gandhinagar, Bhopal",
+            contact_number="0755-6647306",
+            supports_emergency=False # No Emergency
         ),
-        Hospital(
+        models.Hospital(
             name="Govt. Homoeopathic Medical College",
             latitude=23.2160,
             longitude=77.4080,
-            supports_emergency=False,  # This will be ignored by AI
-            contact_number="0755-2551525"
+            address="Kaliasot Dam, Bhopal",
+            contact_number="0755-2551525",
+            supports_emergency=False # No Emergency
         )
     ]
-    
     db.add_all(hospitals)
     db.commit()
-    print(f"✅ {len(hospitals)} Bhopal Hospitals added successfully!")
-    print("\n🎉 Database is ready!")
+    print(f" {len(hospitals)} Hospitals Added")
+
+    print(" Database seeded successfully!")
+    db.close()
 
 if __name__ == "__main__":
     seed_data()
