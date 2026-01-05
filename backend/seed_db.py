@@ -1,67 +1,121 @@
 import sys
 import os
 
-# Dummy File Databse
-# This line is crucial: It tells Python to look for the 'app' folder here
+# Ensure we can find the 'app' folder
 sys.path.append(os.getcwd())
 
 from app.db.database import SessionLocal
 from app.models import Hospital, User
 
-# Connect to the Database
+# Connect to Database
 db = SessionLocal()
 
 def seed_data():
-    print("Starting Database Seeding...")
+    print("🌱 Starting Database Seeding (Bhopal Data)...")
 
-    # 1. Clear Old Data (To prevent duplicates)
+    # 1. Clear Old Data
     try:
         db.query(Hospital).delete()
         db.query(User).delete()
-        print("Old data cleared.")
+        print("🧹 Old data cleared.")
     except Exception:
-        print("Database was empty, skipping cleanup.")
+        print("⚠️  Database empty, skipping cleanup.")
 
     # 2. Add Dummy Users
     users = [
-        User(name="Amit Verma", phone="+919876543210", gender="Male"),
-        User(name="Priya Sharma", phone="+919876543211", gender="Female")
+        User(name="Rahul Sharma", phone="+919999999991", gender="Male"),
+        User(name="Priya Singh", phone="+919999999992", gender="Female")
     ]
     db.add_all(users)
-    print("Users added.")
 
-    # 3. Add Dummy Hospitals (Indore Locations)
+    # 3. Add 11 Bhopal Hospitals
     hospitals = [
-        # Hospital 1: The closest one (Govt)
+        # --- General / Emergency Hospitals (TRUE) ---
         Hospital(
-            name="MY Hospital (Govt)",
-            latitude=22.7196, 
-            longitude=75.8577, 
-            supports_emergency=True, 
-            contact_number="108"
+            name="AIIMS Bhopal",
+            latitude=23.2086,
+            longitude=77.4607,
+            supports_emergency=True,
+            contact_number="0755-2970771"
         ),
-        # Hospital 2: Farther away
         Hospital(
-            name="Bombay Hospital",
-            latitude=22.7543, 
-            longitude=75.8950, 
-            supports_emergency=True, 
-            contact_number="0731-2552525"
+            name="Bhopal Memorial Hospital (BMHRC)",
+            latitude=23.2941,
+            longitude=77.4242,
+            supports_emergency=True,
+            contact_number="0755-2740875"
         ),
-        # Hospital 3: The TRICK (Eye Clinic - AI should ignore this!)
         Hospital(
-            name="Agarwal Eye Clinic",
-            latitude=22.7200, 
-            longitude=75.8580, 
-            supports_emergency=False, 
-            contact_number="0731-1234567"
+            name="Hamidia Hospital",
+            latitude=23.2570,
+            longitude=77.3929,
+            supports_emergency=True,
+            contact_number="0755-2660233"
+        ),
+        Hospital(
+            name="Bansal Hospital",
+            latitude=23.2114,
+            longitude=77.4332,
+            supports_emergency=True,
+            contact_number="0755-4086000"
+        ),
+        Hospital(
+            name="Chirayu Medical College & Hospital",
+            latitude=23.2831,
+            longitude=77.3364,
+            supports_emergency=True,
+            contact_number="0755-2709101"
+        ),
+        Hospital(
+            name="Jai Prakash (JP) District Hospital",
+            latitude=23.2356,
+            longitude=77.4005,
+            supports_emergency=True,
+            contact_number="0755-2551151"
+        ),
+        Hospital(
+            name="Narmada Trauma Centre",
+            latitude=23.2201,
+            longitude=77.4367,
+            supports_emergency=True,
+            contact_number="0755-4040000"
+        ),
+        Hospital(
+            name="J.K. Hospital (LN Medical College)",
+            latitude=23.1765,
+            longitude=77.4124,
+            supports_emergency=True,
+            contact_number="0755-4087000"
+        ),
+
+        # --- No Emergency Support / Specialized (FALSE) ---
+        Hospital(
+            name="ASG Eye Hospital",
+            latitude=23.2335,
+            longitude=77.4295,
+            supports_emergency=False,  # This will be ignored by AI
+            contact_number="0755-4082000"
+        ),
+        Hospital(
+            name="Rishiraj College of Dental Sciences",
+            latitude=23.3050,
+            longitude=77.3370,
+            supports_emergency=False,  # This will be ignored by AI
+            contact_number="0755-6647306"
+        ),
+        Hospital(
+            name="Govt. Homoeopathic Medical College",
+            latitude=23.2160,
+            longitude=77.4080,
+            supports_emergency=False,  # This will be ignored by AI
+            contact_number="0755-2551525"
         )
     ]
     
     db.add_all(hospitals)
     db.commit()
-    print("Hospitals added.")
-    print("\nDatabase is fully loaded and ready!")
+    print(f"✅ {len(hospitals)} Bhopal Hospitals added successfully!")
+    print("\n🎉 Database is ready!")
 
 if __name__ == "__main__":
     seed_data()
