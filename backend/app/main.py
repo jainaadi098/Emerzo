@@ -38,7 +38,7 @@ app.add_middleware(
 
 # 1. Offline Math Formula (Backup Plan)
 def haversine_distance(lat1, lon1, lat2, lon2):
-    R = 6371.0 # Earth radius
+    R = 6371.0 # Earth radius in Km
     dlat = math.radians(lat2 - lat1)
     dlon = math.radians(lon2 - lon1)
     a = (math.sin(dlat / 2) * math.sin(dlat / 2) +
@@ -50,7 +50,7 @@ def haversine_distance(lat1, lon1, lat2, lon2):
 # 2. Smart Function (Pehle API, phir Maths)
 def get_best_distance(lat1, lon1, lat2, lon2):
     # Agar nhi kam kiya toh maths formula
-    if ORS_API_KEY == "eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6IjIzMzI5ZmEyZDEzMzQwOGVhMTJlMGUxMTliZWJiZTZiIiwiaCI6Im11cm11cjY0In0" or not ORS_API_KEY:
+    if not ORS_API_KEY:
         print(" No API Key found, using Offline Math.")
         return haversine_distance(lat1, lon1, lat2, lon2)
 
