@@ -93,7 +93,7 @@ def get_best_distance(lat1, lon1, lat2, lon2):
 
 @app.get("/")
 def read_root():
-    return {"message": "Emerzo Backend is Ready (Makronia Demo Mode)!"}
+    return {"message": "Emerzo Backend is Ready !"}
 
 # API 1: PATIENT TRIGGER
 @app.post("/api/emergency")
