@@ -10,16 +10,6 @@ from dotenv import load_dotenv
 # Load API Key from .env
 load_dotenv()
 
-<<<<<<< HEAD
-=======
-#  folders se import kiya
-from . import models, schemas
-from ...database.database import engine, get_db
-
-# Tables banayi h
-models.Base.metadata.create_all(bind=engine)
-
->>>>>>> 432e734eead502bf6ac033df967f6105eb4512b3
 app = FastAPI()
 
 # --- SETTINGS & CORS ---
@@ -65,11 +55,7 @@ ORS_API_KEY = os.getenv("ORS_API_KEY")
 
 # A. Offline Math Formula (Backup)
 def haversine_distance(lat1, lon1, lat2, lon2):
-<<<<<<< HEAD
     R = 6371.0 # Earth radius in km
-=======
-    R = 6371.0 # Earth radius in Km
->>>>>>> 432e734eead502bf6ac033df967f6105eb4512b3
     dlat = math.radians(lat2 - lat1)
     dlon = math.radians(lon2 - lon1)
     a = (math.sin(dlat / 2) * math.sin(dlat / 2) +
@@ -80,14 +66,8 @@ def haversine_distance(lat1, lon1, lat2, lon2):
 
 # B. Smart Function (API First -> Math Backup)
 def get_best_distance(lat1, lon1, lat2, lon2):
-<<<<<<< HEAD
     if not ORS_API_KEY or ORS_API_KEY == "YOUR_API_KEY_HERE":
         print("⚠️ No valid API Key, using Offline Math.")
-=======
-    # Agar nhi kam kiya toh maths formula
-    if not ORS_API_KEY:
-        print(" No API Key found, using Offline Math.")
->>>>>>> 432e734eead502bf6ac033df967f6105eb4512b3
         return haversine_distance(lat1, lon1, lat2, lon2)
 
     try:
