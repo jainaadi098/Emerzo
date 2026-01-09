@@ -11,7 +11,7 @@ load_dotenv()
 
 #  folders se import kiya
 from . import models, schemas
-from .db.database import engine, get_db
+from ...database.database import engine, get_db
 
 # Tables banayi h
 models.Base.metadata.create_all(bind=engine)
