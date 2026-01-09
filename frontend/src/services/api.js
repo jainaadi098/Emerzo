@@ -1,7 +1,8 @@
 import axios from 'axios';
 
 // Backend Address
-const API_URL = 'http://127.0.0.1:8000';
+// const API_URL = 'https://emerzo-backend.onrender.com/';
+const API_URL = 'https://emerzo-backend.onrender.com';
 
 // 1. Patient SOS Trigger
 export const triggerEmergency = async (latitude, longitude) => {
