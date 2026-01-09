@@ -1,29 +1,18 @@
-from fastapi import FastAPI, Depends, HTTPException
-from sqlalchemy.orm import Session
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
 import math
-import requests #  API call 
-import time
-import os  
+import requests 
+import datetime
+import os
 from dotenv import load_dotenv
 
+# Load API Key from .env
 load_dotenv()
-
-#  folders se import kiya
-from . import models, schemas
-from .db.database import engine, get_db
-
-# Tables banayi h
-models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
 
-# API 
-ORS_API_KEY =os.getenv("ORS_API_KEY")
-
-
-# SETTINGS
-
+# --- SETTINGS & CORS ---
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -32,13 +21,41 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# --- 1. IN-MEMORY DATA (For Demo Stability) ---
 
-#  DISTANCE ENGINE (Hybrid: API + Math Backup )
+# REAL MAKRONIA HOSPITALS (Dr. Rai is Active)
+hospitals_db = [
+    {
+        "id": 1, 
+        "name": "Dr. Rai Hospital", 
+        "lat": 23.8500, 
+        "lng": 78.7900, 
+        "available": True
+    },
+    {
+        "id": 2, 
+        "name": "Bansal Hospital Sagar", 
+        "lat": 23.8562, 
+        "lng": 78.7917, 
+        "available": True
+    }
+]
 
+# RAM Storage for Requests (Clears on restart)
+active_requests = []
 
-# 1. Offline Math Formula (Backup Plan)
+# Input Model
+class EmergencyRequest(BaseModel):
+    latitude: float
+    longitude: float
+
+# --- 2. SMART DISTANCE ENGINE (Hybrid) ---
+
+ORS_API_KEY = os.getenv("ORS_API_KEY")
+
+# A. Offline Math Formula (Backup)
 def haversine_distance(lat1, lon1, lat2, lon2):
-    R = 6371.0 # Earth radius
+    R = 6371.0 # Earth radius in km
     dlat = math.radians(lat2 - lat1)
     dlon = math.radians(lon2 - lon1)
     a = (math.sin(dlat / 2) * math.sin(dlat / 2) +
@@ -47,191 +64,95 @@ def haversine_distance(lat1, lon1, lat2, lon2):
     c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
     return R * c
 
-# 2. Smart Function (Pehle API, phir Maths)
+# B. Smart Function (API First -> Math Backup)
 def get_best_distance(lat1, lon1, lat2, lon2):
-    # Agar nhi kam kiya toh maths formula
-    if ORS_API_KEY == "eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6IjIzMzI5ZmEyZDEzMzQwOGVhMTJlMGUxMTliZWJiZTZiIiwiaCI6Im11cm11cjY0In0" or not ORS_API_KEY:
-        print(" No API Key found, using Offline Math.")
+    if not ORS_API_KEY or ORS_API_KEY == "YOUR_API_KEY_HERE":
+        print("⚠️ No valid API Key, using Offline Math.")
         return haversine_distance(lat1, lon1, lat2, lon2)
 
     try:
-        # API call kara (Driving Car profile)
         url = f"https://api.openrouteservice.org/v2/directions/driving-car?start={lon1},{lat1}&end={lon2},{lat2}"
         headers = {'Authorization': ORS_API_KEY}
         
-        response = requests.get(url, headers=headers, timeout=3) # 3 sec timeout
+        response = requests.get(url, headers=headers, timeout=2) 
         
         if response.status_code == 200:
             data = response.json()
-            # Distance meters ko km mein convert kiya
             dist_meters = data['features'][0]['properties']['segments'][0]['distance']
             return dist_meters / 1000.0
         else:
-            print(f" API Error {response.status_code}: Switching to Offline Math...")
+            print(f"⚠️ API Error {response.status_code}: Switching to Math...")
             return haversine_distance(lat1, lon1, lat2, lon2)
             
     except Exception as e:
-        print(f" Connection Failed ({e}): Switching to Offline Math...")
+        print(f"⚠️ Connection Failed ({e}): Switching to Math...")
         return haversine_distance(lat1, lon1, lat2, lon2)
 
-# main.py mein 'app = FastAPI()' ke neeche yeh jod dein:
+
+# --- 3. API ENDPOINTS ---
 
 @app.get("/")
 def read_root():
-    return {"message": " Emerzo Backend is Ready! "}
+    return {"message": "Emerzo Backend is Ready (Makronia Demo Mode)!"}
 
-
-# ---------------------------------------------------------
-#  API 1: TRIGGER EMERGENCY
-# ---------------------------------------------------------
-
-@app.post("/api/emergency", response_model=schemas.EmergencyResponse)
-def trigger_emergency(request: schemas.EmergencyCreate, db: Session = Depends(get_db)):
-    print(f" Emergency Request: {request.latitude}, {request.longitude}")
-
-    # Sabse Paas Wala Hospital Dhoondo
+# API 1: PATIENT TRIGGER
+@app.post("/api/emergency")
+async def trigger_emergency(request: EmergencyRequest):
+    user_lat = request.latitude
+    user_lng = request.longitude
     
-    hospitals = db.query(models.Hospital).filter(models.Hospital.supports_emergency == True).all()
-    
-    if not hospitals:
-        raise HTTPException(status_code=404, detail="No hospitals found")
+    print(f"🚨 SOS Received: {user_lat}, {user_lng}")
 
     nearest_hospital = None
-    min_dist = float("inf")
+    min_dist = float('inf')
 
-    # Optimization: Pehle Math se top 3 dhoondo, phir unka Real Road Distance check karo
+    for hosp in hospitals_db:
+        if hosp["available"]:
+            dist = get_best_distance(user_lat, user_lng, hosp["lat"], hosp["lng"])
+            if dist < min_dist:
+                min_dist = dist
+                nearest_hospital = hosp
+
+    if nearest_hospital:
+        # Save to List
+        new_req_id = len(active_requests) + 1
+        new_request = {
+            "id": new_req_id,
+            "patient_id": f"PAT-{9000 + new_req_id}",
+            "lat": user_lat,
+            "lng": user_lng,
+            "hospital_name": nearest_hospital["name"],
+            "distance": round(min_dist, 2),
+            "time": datetime.datetime.now().strftime("%H:%M:%S"),
+            "status": "Pending"
+        }
+        active_requests.append(new_request)
+
+        return {
+            "status": "Assigned",
+            "hospital": nearest_hospital["name"], 
+            "hospital_lat": nearest_hospital["lat"],
+            "hospital_lng": nearest_hospital["lng"],
+            "distance_km": round(min_dist, 2)
+        }
     
+    raise HTTPException(status_code=404, detail="No hospitals found nearby")
+
+
+# API 2: HOSPITAL DASHBOARD
+@app.get("/api/hospital/requests")
+def get_dashboard_data():
+    pending_reqs = [r for r in active_requests if r["status"] == "Pending"]
+    return pending_reqs
+
+
+# API 3: HOSPITAL ACCEPT
+@app.post("/api/hospital/accept/{req_id}")
+def accept_request(req_id: int):
+    for req in active_requests:
+        if req["id"] == req_id:
+            req["status"] = "Accepted"
+            print(f"✅ Request #{req_id} Accepted by Hospital")
+            return {"message": "Ambulance Dispatched", "status": "Accepted"}
     
-    for hospital in hospitals:
-        # Yahan ab Smart Function use hoga 
-        dist = get_best_distance(request.latitude, request.longitude, hospital.latitude, hospital.longitude)
-        
-        if dist < min_dist:
-            min_dist = dist
-            nearest_hospital = hospital
-
-    if not nearest_hospital:
-        raise HTTPException(status_code=404, detail="No suitable hospital found")
-
-    # Save to DB
-    new_request = models.EmergencyRequest(
-        latitude=request.latitude,
-        longitude=request.longitude,
-        emergency_type=request.emergency_type,
-        status="Pending",
-        hospital_id=nearest_hospital.id
-    )
-    db.add(new_request)
-    db.commit()
-    db.refresh(new_request)
-
-    # Notification
-    new_notification = models.HospitalNotification(
-        request_id=new_request.request_id,
-        hospital_id=nearest_hospital.id,
-        status="Pending"
-    )
-    db.add(new_notification)
-    db.commit()
-
-    return {
-        "message": "Emergency Dispatched!",
-        "hospital_name": nearest_hospital.name,
-        "distance_km": round(min_dist, 2),
-        "status": "Pending",
-        "request_id": new_request.request_id,
-        "hospital_lat": nearest_hospital.latitude,
-        "hospital_lng": nearest_hospital.longitude
-    }
-
-# ---------------------------------------------------------
-#  API 2: APPROVE REQUEST
-# ---------------------------------------------------------
-@app.put("/api/emergency/{request_id}/approve")
-def approve_emergency(request_id: int, db: Session = Depends(get_db)):
-    request = db.query(models.EmergencyRequest).filter(models.EmergencyRequest.request_id == request_id).first()
-    if not request:
-        raise HTTPException(status_code=404, detail="Request not found")
-
-    last_notification = db.query(models.HospitalNotification)\
-        .filter(models.HospitalNotification.request_id == request_id)\
-        .order_by(models.HospitalNotification.id.desc())\
-        .first()
-
-    if last_notification:
-        last_notification.status = "Accepted"
-
-    request.status = "Ambulance Dispatched"
-    db.commit()
-
-    return {"message": "Request Approved! Ambulance is on the way.", "status": "Ambulance Dispatched"}
-
-# ---------------------------------------------------------
-#  API 3: REJECT & RE-ROUTE
-# ---------------------------------------------------------
-@app.post("/api/emergency/{request_id}/reject")
-def reject_and_reroute(request_id: int, db: Session = Depends(get_db)):
-    request = db.query(models.EmergencyRequest).filter(models.EmergencyRequest.request_id == request_id).first()
-    if not request:
-        raise HTTPException(status_code=404, detail="Request not found")
-
-    # Current Notification -> Rejected
-    last_notification = db.query(models.HospitalNotification)\
-        .filter(models.HospitalNotification.request_id == request_id)\
-        .order_by(models.HospitalNotification.id.desc())\
-        .first()
-    
-    if last_notification:
-        last_notification.status = "Rejected"
-
-    # History Check
-    previous_notifications = db.query(models.HospitalNotification.hospital_id)\
-        .filter(models.HospitalNotification.request_id == request_id).all()
-    rejected_hospital_ids = [n[0] for n in previous_notifications]
-
-    # Find Next Nearest
-    all_hospitals = db.query(models.Hospital).filter(models.Hospital.supports_emergency == True).all()
-    
-    hospital_distances = []
-    for h in all_hospitals:
-        #  Smart Distance here too
-        dist = get_best_distance(request.latitude, request.longitude, h.latitude, h.longitude)
-        hospital_distances.append((h, dist))
-    
-    hospital_distances.sort(key=lambda x: x[1])
-
-    next_hospital = None
-    for h, dist in hospital_distances:
-        if h.id not in rejected_hospital_ids:
-            next_hospital = h
-            break 
-    
-    if not next_hospital:
-        return {"message": "CRITICAL: No other hospitals available!", "status": "Failed"}
-
-    # Re-route
-    request.hospital_id = next_hospital.id
-    
-    new_notif = models.HospitalNotification(
-        request_id=request.request_id,
-        hospital_id=next_hospital.id,
-        status="Pending"
-    )
-    db.add(new_notif)
-    db.commit()
-
-    return {
-        "message": f"Request moved to next hospital: {next_hospital.name}",
-        "new_hospital": next_hospital.name,
-        "status": "Re-routed",
-        "hospital_lat": next_hospital.latitude,
-        "hospital_lng": next_hospital.longitude
-    }
-
-
-#  UTILITY
-
-@app.get("/api/hospitals")
-def get_hospitals(db: Session = Depends(get_db)):
-    hospitals = db.query(models.Hospital).all()
-    return hospitals
+    raise HTTPException(status_code=404, detail="Request not found")
