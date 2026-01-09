@@ -1,7 +1,7 @@
 from sqlalchemy import Column, Integer, String, Float, Boolean, ForeignKey, DateTime
 from sqlalchemy.orm import relationship
 from datetime import datetime
-from .db.database import Base
+from database.database import Base
 
 # -------------------------------------------------------
 # 1. USER TABLE (Jo madad mangega)

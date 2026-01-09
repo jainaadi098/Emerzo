@@ -1,6 +1,8 @@
 from sqlalchemy.orm import Session
-from app.db.database import SessionLocal, engine
-from app import models
+
+
+from .database import SessionLocal, engine
+from backend.app import models
 
 # 1. Sabse pehle Tables Create karein
 models.Base.metadata.create_all(bind=engine)

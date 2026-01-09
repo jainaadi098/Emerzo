@@ -4,7 +4,7 @@ from sqlalchemy.orm import sessionmaker
 
 #  MERGED DECISION: Hum 'emerzo.db' hi use karenge (jisme Bhopal data hai)
 
-SQLALCHEMY_DATABASE_URL = "sqlite:///./emerzo.db"
+SQLALCHEMY_DATABASE_URL = "sqlite:///./Emerzo.db"
 
 engine = create_engine(
     SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False}
